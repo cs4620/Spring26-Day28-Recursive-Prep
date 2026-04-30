@@ -125,34 +125,88 @@ int main()
   const float distance = -15;
 
    vector<Triangle> triangles;
-  Vector3 nxnynz = {-size, -size * 1.5f, -size + distance};
-  Vector3 nxnypz = {-size, -size * 1.5f, size + distance};
-  Vector3 nxpynz = {-size, +size * 1.5f, -size + distance};
-  Vector3 nxpypz = {-size, +size * 1.5f, size + distance};
-  Vector3 pxnynz = {+size, -size * 1.5f, -size + distance};
-  Vector3 pxnypz = {+size, -size * 1.5f, size + distance};
-  Vector3 pxpynz = {+size, +size * 1.5f, -size + distance};
-  Vector3 pxpypz = {+size, +size * 1.5f, size + distance};
+   Vector3 uv00 = {0.f, 0.f, 0.f};
+  Vector3 uv10 = {1.f, 0.f, 0.f};
+  Vector3 uv01 = {0.f, 1.f, 0.f};
+  Vector3 uv11 = {1.f, 1.f, 0.f};
+
+  Vector3 n_bottom = nxnypz.sub(nxnynz).cross(pxnypz.sub(nxnynz)).normalized();
+  Vector3 n_left = nxpynz.sub(nxnynz).cross(nxnypz.sub(nxnynz)).normalized();
+  Vector3 n_right = pxnypz.sub(pxnynz).cross(pxpynz.sub(pxnynz)).normalized();
+  Vector3 n_back = nxnynz.sub(nxpynz).cross(pxpynz.sub(nxpynz)).normalized();
 
   // Bottom
-  triangles.push_back({nxnynz, nxnypz, pxnypz, orange_shader});
-  triangles.push_back({nxnynz, pxnypz, pxnynz, orange_shader});
+  triangles.push_back({nxnynz, nxnypz, pxnypz, n_bottom, n_bottom, n_bottom, uv00, uv01, uv11, orange_shader});
+  triangles.push_back({nxnynz, pxnypz, pxnynz, n_bottom, n_bottom, n_bottom, uv00, uv11, uv10, orange_shader});
 
   // Top
-  triangles.push_back({nxpynz, pxpypz, nxpypz, orange_shader});
-  triangles.push_back({nxpynz, pxpynz, pxpypz, orange_shader});
+  // triangles.push_back({nxpynz, pxpypz, nxpypz, orange_shader});
+  // triangles.push_back({nxpynz, pxpynz, pxpypz, orange_shader});
 
   // Left
-  triangles.push_back({nxnynz, nxpynz, nxnypz, orange_shader});
-  triangles.push_back({nxpypz, nxnypz, nxpynz, orange_shader});
+  triangles.push_back({nxnynz, nxpynz, nxnypz, n_left, n_left, n_left, uv00, uv10, uv01, orange_shader});
+  triangles.push_back({nxpypz, nxnypz, nxpynz, n_left, n_left, n_left, uv11, uv01, uv10, orange_shader});
 
   // Right
-  triangles.push_back({pxnynz, pxnypz, pxpynz, orange_shader});
-  triangles.push_back({pxpypz, pxpynz, pxnypz, orange_shader});
+  triangles.push_back({pxnynz, pxnypz, pxpynz, n_right, n_right, n_right, uv00, uv01, uv10, orange_shader});
+  triangles.push_back({pxpypz, pxpynz, pxnypz, n_right, n_right, n_right, uv11, uv10, uv01, orange_shader});
 
   // Back
-  triangles.push_back({nxpynz, nxnynz, pxpynz, orange_shader});
-  triangles.push_back({pxnynz, pxpynz, nxnynz, orange_shader});
+  triangles.push_back({nxpynz, nxnynz, pxpynz, n_back, n_back, n_back, uv00, uv01, uv10, orange_shader});
+  triangles.push_back({pxnynz, pxpynz, nxnynz, n_back, n_back, n_back, uv11, uv10, uv01, orange_shader});
+
+  const int sphere_lat_segments = 8;
+  const int sphere_lon_segments = 8;
+  const float sphere_radius = size * 0.4f;
+  const float pi = 3.141f;
+  Vector3 sphere_center = {0.f, 0.f, -10};
+
+  for (int lat = 0; lat < sphere_lat_segments; lat++)
+  {
+    float theta0 = pi * (float)lat / (float)sphere_lat_segments;
+    float theta1 = pi * (float)(lat + 1) / (float)sphere_lat_segments;
+
+    for (int lon = 0; lon < sphere_lon_segments; lon++)
+    {
+      float phi0 = 2.f * pi * (float)lon / (float)sphere_lon_segments;
+      float phi1 = 2.f * pi * (float)(lon + 1) / (float)sphere_lon_segments;
+
+      Vector3 p00 = {
+          sphere_center.x + sphere_radius * sin(theta0) * cos(phi0),
+          sphere_center.y + sphere_radius * cos(theta0),
+          sphere_center.z + sphere_radius * sin(theta0) * sin(phi0)};
+      Vector3 p01 = {
+          sphere_center.x + sphere_radius * sin(theta0) * cos(phi1),
+          sphere_center.y + sphere_radius * cos(theta0),
+          sphere_center.z + sphere_radius * sin(theta0) * sin(phi1)};
+      Vector3 p10 = {
+          sphere_center.x + sphere_radius * sin(theta1) * cos(phi0),
+          sphere_center.y + sphere_radius * cos(theta1),
+          sphere_center.z + sphere_radius * sin(theta1) * sin(phi0)};
+      Vector3 p11 = {
+          sphere_center.x + sphere_radius * sin(theta1) * cos(phi1),
+          sphere_center.y + sphere_radius * cos(theta1),
+          sphere_center.z + sphere_radius * sin(theta1) * sin(phi1)};
+
+      Vector3 n00 = p00.sub(sphere_center).normalized();
+      Vector3 n01 = p01.sub(sphere_center).normalized();
+      Vector3 n10 = p10.sub(sphere_center).normalized();
+      Vector3 n11 = p11.sub(sphere_center).normalized();
+
+      float u0 = (float)lon / (float)sphere_lon_segments;
+      float u1 = (float)(lon + 1) / (float)sphere_lon_segments;
+      float v0 = 1.f - (float)lat / (float)sphere_lat_segments;
+      float v1 = 1.f - (float)(lat + 1) / (float)sphere_lat_segments;
+
+      Vector3 uv00_s = {u0, v0, 0.f};
+      Vector3 uv01_s = {u1, v0, 0.f};
+      Vector3 uv10_s = {u0, v1, 0.f};
+      Vector3 uv11_s = {u1, v1, 0.f};
+
+      triangles.push_back({p10, p00, p11, n10, n00, n11, uv10_s, uv00_s, uv11_s, green_shader});
+      triangles.push_back({p11, p00, p01, n11, n00, n01, uv11_s, uv00_s, uv01_s, green_shader});
+    }
+  }
 
   Vector3 background_color = {0.1f, 0.1f, .1f};
   const int w = 640;
